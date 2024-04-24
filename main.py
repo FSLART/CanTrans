@@ -2,6 +2,7 @@ import cantools
 import configparser
 #import pandas 
 import os
+import numpy
 #go into config.ini input.path
 config = configparser.ConfigParser()
 #check if config.ini exists
@@ -16,6 +17,7 @@ path = config['input']['path']
 path_db = config['input']['path_db']
 path_db = path_db.replace('"', "")
 db = cantools.database.load_file(path_db)
+#print(db.messages)
 
 dictionary = {
   "pos_hour": config['input']['pos_hour'],
@@ -47,30 +49,48 @@ if os.path.exists(path):
       
       #close file
       f.close()
+  #FLATTEN bufferFile
+  bufferFile = numpy.array(bufferFile).flatten()
+  output = []
+  
   for line in bufferFile:
+    
+    
     #split the line by ,
     fat = []
-    for l in line:
-      fat = l.split(",")
+    fat = line.split(",")
     #print (fat)
+    print(fat)
     hora = fat[int(dictionary["pos_hour"])]
     minuto = fat[int(dictionary["pos_minute"])]
     segundo = fat[int(dictionary["pos_second"])]
     ms = fat[int(dictionary["pos_ms"])]
     id_s = fat[int(dictionary["pos_id"])]
+    
     byte_s = fat[int(dictionary["pos_bytes"]):]
-    
-    #convert string into hexadecimal integers
-    byte_s = [int(x, 16) for x in byte_s]
-    byte_s = bytes(byte_s)
-    print(id_s)
-    print(byte_s)
-    
-    f = db.decode_message(0x60, byte_s)
-    
-    #print(f); 
-
-    # 
+    try:
+      id_s = int(id_s, 16)
+      
+      #convert string into hexadecimal integers
+      byte_s = [int(x, 16) for x in byte_s]
+      byte_s = bytes(byte_s)
+      print(id_s)
+      print(byte_s)
+      f = db.decode_message(id_s, byte_s)
+       
+      output.append(f)
+      
+    except ValueError:
+      print("O id não é um hexadecimal")
+      continue
+    except: 
+      print("Erro Perdu (O perdu nao meteu o id no dbc(provavelmente))")
+    #
+  print("=========DONE==========")
+  
+  print(output)
+  
+    # T
   #for line in bufferFile:
   #print (line)
 else:
