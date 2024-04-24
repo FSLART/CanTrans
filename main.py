@@ -3,6 +3,7 @@ import configparser
 #import pandas 
 import os
 import numpy
+import datetime
 #go into config.ini input.path
 config = configparser.ConfigParser()
 #check if config.ini exists
@@ -77,7 +78,7 @@ if os.path.exists(path):
       print(id_s)
       print(byte_s)
       f = db.decode_message(id_s, byte_s)
-       
+      
       output.append(f)
       
     except ValueError:
@@ -89,6 +90,14 @@ if os.path.exists(path):
   print("=========DONE==========")
   
   print(output)
+  #write time.log.json
+  unixtime = (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()
+  
+  print (unixtime)
+  unixtime=int(unixtime)
+  with open(str(unixtime)+'.log.json', 'w') as f:
+    f.write(str(output))
+    f.close()
   
     # T
   #for line in bufferFile:
