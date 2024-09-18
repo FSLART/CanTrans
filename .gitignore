@@ -1,4 +1,5 @@
 folderTest
 config.ini
-*.dbc
+**.dbc
 *.log.json
+**.dbf
