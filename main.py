@@ -1,9 +1,30 @@
 import cantools
 import configparser
-#import pandas 
+import pandas as pd
 import os
 import numpy
 import datetime
+
+
+def switch_plicas_aspas(stringsf: str):
+  return stringsf.replace("'", '"')
+def colapse_columns_into_array(json: dict):
+  result = {}
+  for entry in json:
+    for key, value in entry.items():
+        # If the key is not already in result, initialize it with an empty list
+        if key not in result:
+            result[key] = []
+        # Append the value to the corresponding list in result
+        result[key].append(value)
+  return result
+def turn_json_csv(json: dict):
+  #make each key a column and separate it by ; 
+  df = pd.DataFrame(json)
+
+  # Save DataFrame to CSV
+  df.to_csv('output.csv', index=False)
+
 #go into config.ini input.path
 config = configparser.ConfigParser()
 #check if config.ini exists
@@ -28,6 +49,7 @@ dictionary = {
   "pos_id": config['input']['pos_id'],
   "pos_bytes": config['input']['pos_bytes']
 }
+oldtime = 0
 # remove the "
 path = path.replace('"', "")
 
@@ -66,6 +88,11 @@ if os.path.exists(path):
     minuto = fat[int(dictionary["pos_minute"])]
     segundo = fat[int(dictionary["pos_second"])]
     ms = fat[int(dictionary["pos_ms"])]
+    try:
+      timestamp= int(hora)*3600000 + int(minuto)*60000 + int(segundo) * 1000 + int(ms)
+    except:
+      print("Existe campos vazios na hora, minuto, segundo ou ms")
+      timestamp = oldtime + 1
     id_s = fat[int(dictionary["pos_id"])]
     
     byte_s = fat[int(dictionary["pos_bytes"]):]
@@ -75,29 +102,36 @@ if os.path.exists(path):
       #convert string into hexadecimal integers
       byte_s = [int(x, 16) for x in byte_s]
       byte_s = bytes(byte_s)
-      print(id_s)
+      
+      print("id"+str(id_s))
       print(byte_s)
       f = db.decode_message(id_s, byte_s)
       
-      output.append(f)
       
-    except ValueError:
-      print("O id não é um hexadecimal")
-      continue
-    except: 
-      print("Erro Perdu (O perdu nao meteu o id no dbc(provavelmente))")
+    except:
+      print("Erro ao decodificar a mensagem")
+    #f["timestamp"] = timestamp
+    k:dict = f
+    k['tp'] = timestamp
+    oldtime = timestamp
+    output.append(k)
+    
+
     #
   print("=========DONE==========")
   
-  print(output)
-  #write time.log.json
-  unixtime = (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()
+  turn_json_csv(output)
   
-  print (unixtime)
-  unixtime=int(unixtime)
-  with open(str(unixtime)+'.log.json', 'w') as f:
-    f.write(str(output))
-    f.close()
+  #write time.log.json
+  #unixtime = (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()
+  
+  
+  #unixtime=int(unixtime)
+  #write_ = switch_plicas_aspas(str(output))
+  
+  #with open(str(unixtime)+'.log.json', 'w') as f:
+  #  f.write(write_)
+  #  f.close()
   
     # T
   #for line in bufferFile:
@@ -105,6 +139,5 @@ if os.path.exists(path):
 else:
   print("O diretório não existe, por favor cria um diretório com o nome: "+path)
   
-
 
 
