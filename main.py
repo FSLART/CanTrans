@@ -11,34 +11,22 @@ class timeframe:
     self.minute = minute
     self.second = second
     self.millis = millis
-def fix_time (timeframe_new: timeframe, timeframe_old: timeframe):
-  try: 
-    #python wont catch this exception for some fucking reason so i had to do this ugly ass code
-    
-    timeframe_new.hour = int(timeframe_new.hour)
-    timeframe_new.minute = int(timeframe_new.minute)
-    timeframe_new.second = int(timeframe_new.second)
-    timeframe_new.millis = int(timeframe_new.millis)
-  except:
-    timeframe_new.hour = 0
-    timeframe_new.minute = 0 
-    timeframe_new.second = 0
-    timeframe_new.millis = 0
-    #if (type(timeframe_new.hour) == str):
-    #  timeframe_new.hour=timeframe_old.hour+"?"
-      
-    #if(type(timeframe_new.minute) == str):
-    #  timeframe_new.minute =timeframe_old.minute+"?"
-    
-    #if(type(timeframe_new.second) == str):
-    #  timeframe_new.secondhhpw=timeframe_old.second+"?"
-    
-    #if(type(timeframe_new.millis) == str):
-    #  timeframe_new.millis=timeframe_old.millis+"?"
-  return timeframe_new
+  def __str__(self):
+    return str(self.hour)+":"+str(self.minute)+":"+str(self.second)+"."+str(self.millis)
+  def __repr__(self):
+    return str(self.hour)+":"+str(self.minute)+":"+str(self.second)+"."+str(self.millis)
+  def epoch_unix(self): 
+    ret = 0
+    try: 
+      ret = int(self.hour)*3600000 + int(self.minute)*60000 + int(self.second) * 1000 + int(self.millis)
+    except:
+      print("Existe campos vazios na hora, minuto, segundo ou ms")
+      ret = 0
+    return ret
+  def __eq__(self, other):
+    return self.epoch_unix() == other.epoch_unix() 
 
-def time_squash_perdu (hour, minute, second, millis):
-  return str(hour)+":"+str(minute)+":"+str(second)+"."+str(millis)
+
 
 
 
@@ -165,7 +153,7 @@ if os.path.exists(path):
       
         
       newtime: timeframe = timeframe(hora, minuto, segundo, ms)
-      newtime = fix_time(newtime, oldtime)
+      
       bus = fat[int(dictionary["pos_bus"])]
       id_s = fat[int(dictionary["pos_id"])]
       byte_s = fat[int(dictionary["pos_bytes"]):]
@@ -176,14 +164,11 @@ if os.path.exists(path):
         byte_s = bytes(byte_s)
         
         f = db.decode_message(id_s, byte_s)
-      
-        #time = time_squash_perdu(hora, minuto, segundo, ms)
-        #print ("timestamp da linha"+time)
-        #f["timestamp"] = time 
+        f['tp'] = newtime.epoch_unix()
         output.append(f)
         
       except ValueError as e:
-        print("O id não é um hexadecimal"+e.args)
+        print("O id não é um hexadecimal")
         
         continue
     
@@ -191,64 +176,12 @@ if os.path.exists(path):
         print("Erro Perdu (O perdu nao meteu o id no dbc(provavelmente))")
       #
     print("=========DONE==========")
-    
-    #split the line by ,
-    fat = []
-    fat = line.split(",")
-    #print (fat)
-    print(fat)
-    hora = fat[int(dictionary["pos_hour"])]
-    minuto = fat[int(dictionary["pos_minute"])]
-    segundo = fat[int(dictionary["pos_second"])]
-    ms = fat[int(dictionary["pos_ms"])]
-    try:
-      timestamp= int(hora)*3600000 + int(minuto)*60000 + int(segundo) * 1000 + int(ms)
-    except:
-      print("Existe campos vazios na hora, minuto, segundo ou ms")
-      timestamp = oldtime + 1
-    id_s = fat[int(dictionary["pos_id"])]
-    
-    byte_s = fat[int(dictionary["pos_bytes"]):]
-    try:
-      id_s = int(id_s, 16)
-      
-      #convert string into hexadecimal integers
-      byte_s = [int(x, 16) for x in byte_s]
-      byte_s = bytes(byte_s)
-      
-      print("id"+str(id_s))
-      print(byte_s)
-      f = db.decode_message(id_s, byte_s)
-      
-      
-    except:
-      print("Erro ao decodificar a mensagem")
-    #f["timestamp"] = timestamp
-    k:dict = f
-    k['tp'] = timestamp
-    oldtime = timestamp
-    output.append(k)
-    
-
-    #
-  print("=========DONE==========")
-  
-  turn_json_csv(output)
-  
-  #write time.log.json
-  #unixtime = (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()
+    print("Output: "+str(output))
+    turn_json_csv(output)
   
   
-  #unixtime=int(unixtime)
-  #write_ = switch_plicas_aspas(str(output))
   
-  #with open(str(unixtime)+'.log.json', 'w') as f:
-  #  f.write(write_)
-  #  f.close()
   
-    # T
-  #for line in bufferFile:
-  #print (line)
 else:
   print("O diretório não existe, por favor cria um diretório com o nome: "+path)
   
