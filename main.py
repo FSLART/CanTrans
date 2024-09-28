@@ -61,15 +61,27 @@ config.read('config.ini')
 
 path = config['input']['path']
 path = path.replace('"', "")
-path_db = config['input']['path_db']
-path_db = path_db.replace('"', "")
+
+
 bus = config['input']['pos_bus']
-db = cantools.database.load_file(path_db)
+num_db = config['input']['num_path_db_peak']
+db = {}
 
-if path in path_db: 
-  print("O path do ficheiro não pode ser o mesmo que o path do dbc")
-  exit(1) 
+for i in range(1,int(num_db)+1):
+    
+    path_db = config['input']['path_db'+str(i)]
+    path_db = path_db.replace('"', "")
+    
+    if path in path_db: 
+      print("O path do ficheiro não pode ser o mesmo que o path do dbc")
+      exit(1) 
+    
+    db[i] = cantools.database.load_file(path_db)
+    print("HEY")
+    print(db[i].messages)
 
+
+#path_db3 = "/home/micron/sav/Trabalhos/2023-2024/FormulaStudent/Eletro2024/CanTrans/Orion_CANBUS_23-09.dbc"
 dictionary = {
   "pos_hour": config['input']['pos_hour'],
   "pos_minute": config['input']['pos_minute'],
@@ -158,15 +170,17 @@ if os.path.exists(path):
       id_s = fat[int(dictionary["pos_id"])]
       byte_s = fat[int(dictionary["pos_bytes"]):]
       try:
-        id_s = int(id_s)
+        id_s = int(id_s,16)
         #convert string into hexadecimal integers
         byte_s = [int(x) for x in byte_s]
         byte_s = bytes(byte_s)
+        print(int(bus))
+        f = db[int(bus)].decode_message(id_s, byte_s)
         
-        f = db.decode_message(id_s, byte_s)
         f['tp'] = newtime.epoch_unix()
         output.append(f)
-        
+      except IndexError as e:
+        print("DBC em falta para o bus"+ int(bus))
       except ValueError as e:
         print("O id não é um hexadecimal")
         
