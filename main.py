@@ -3,7 +3,7 @@ import configparser
 import pandas as pd
 import os
 import numpy
-import datetime
+from datetime import datetime
 import time
 class timeframe:
   def __init__(self, hour, minute, second, millis):
@@ -179,10 +179,10 @@ if os.path.exists(path):
         #add newtime onto todays date in ms epoch unix but at 00:00:00.000
 
 
-        #now = datetime.now()
+        now = datetime.now()
         # Get the start of the day (midnight)
-        #start_of_day = datetime(now.year, now.month, now.day)
-        last_time_epoch = newtime.epoch_unix() #+ start_of_day.total_seconds()*1000
+        start_of_day = datetime(now.year, now.month, now.day).timestamp()
+        last_time_epoch = newtime.epoch_unix() + start_of_day*1000
 
         # convert last_time_epoch to datetime and print the year, month, day, hour, minute, second
       
