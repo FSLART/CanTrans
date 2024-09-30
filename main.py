@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import numpy
 import datetime
-
+import time
 class timeframe:
   def __init__(self, hour, minute, second, millis):
     self.hour = hour
@@ -176,8 +176,18 @@ if os.path.exists(path):
         byte_s = bytes(byte_s)
         print(int(bus))
         f = db[int(bus)].decode_message(id_s, byte_s)
-        
-        f['tp'] = newtime.epoch_unix()
+        #add newtime onto todays date in ms epoch unix but at 00:00:00.000
+
+
+        #now = datetime.now()
+        # Get the start of the day (midnight)
+        #start_of_day = datetime(now.year, now.month, now.day)
+        last_time_epoch = newtime.epoch_unix() #+ start_of_day.total_seconds()*1000
+
+        # convert last_time_epoch to datetime and print the year, month, day, hour, minute, second
+      
+        print(last_time_epoch)
+        f['tp'] = last_time_epoch
         output.append(f)
       except IndexError as e:
         print("DBC em falta para o bus"+ int(bus))
